@@ -49,8 +49,10 @@ public class StructureCompassItem extends Item {
 					double angle2 = 0.0;
 					if(stack.hasTag()) {
 						CompoundTag tags = stack.getTag();
-						angle2 = this.getAngleFromTag(stack, entity);
-						if(tags.containsKey("dim")) {
+						if(TagHelper.deserializeBlockPos(tags.getCompound("pos")).equals(world.getSpawnPos())) {
+							show = false;
+						} else if(tags.containsKey("dim")) {
+							angle2 = this.getAngleFromTag(stack, entity);
 							show = tags.getInt("dim") == entity.dimension.getRawId();
 						}
 					} else {
@@ -92,11 +94,6 @@ public class StructureCompassItem extends Item {
 			@Environment(EnvType.CLIENT)
 			private double getYaw(ItemFrameEntity itemFrameEntity) {
 				return MathHelper.wrapDegrees(180 + itemFrameEntity.getHorizontalFacing().getHorizontal() * 90);
-			}
-			
-			@Environment(EnvType.CLIENT)
-			private double getAngleToSpawn(IWorld iWorld, Entity entity) {
-				return this.getAngleToPos(iWorld.getSpawnPos(), entity);
 			}
 			
 			@Environment(EnvType.CLIENT)
@@ -187,7 +184,7 @@ public class StructureCompassItem extends Item {
 	public void inventoryTick(ItemStack stack, World world, Entity entity, int i, boolean bool) {
 		super.inventoryTick(stack, world, entity, i, bool);
 		if(!world.isClient()) {
-			BlockPos pos = world.locateStructure(structure.getName(), entity.getBlockPos(), 1000, false);
+			BlockPos pos = world.locateStructure(structure.getName(), entity.getBlockPos(), 64, false);
 			
 			if(pos!=null) {
 				CompoundTag tags = stack.getTag();
@@ -197,7 +194,8 @@ public class StructureCompassItem extends Item {
 				tags.put("pos", TagHelper.serializeBlockPos(pos));
 				tags.putInt("dim", world.getDimension().getType().getRawId());
 				
-				stack.setTag(tags);
+				if(!stack.getTag().equals(tags))
+					stack.setTag(tags);
 			}
 		}
 	}
